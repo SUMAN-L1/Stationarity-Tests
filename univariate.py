@@ -40,4 +40,12 @@ if uploaded_file is not None:
             st.write("The p-value is less than 0.05, indicating that we reject the null hypothesis.")
             st.write("Conclusion: The time series is stationary.")
         else:
-            st.write("The p-value is great
+            st.write("The p-value is greater than 0.05, indicating that we fail to reject the null hypothesis.")
+            st.write("Conclusion: The time series is non-stationary.")
+        
+        # Plot the series
+        st.subheader("Time Series Plot")
+        fig, ax = plt.subplots()
+        ax.plot(series)
+        ax.set_title(f'Time Series Plot for {column}')
+        st.pyplot(fig)
