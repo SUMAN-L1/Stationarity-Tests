@@ -2,9 +2,9 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from statsmodels.tsa.stattools import adfuller, kpss, phillips_perron, durbin_watson, acf, q_stat
-from statsmodels.tsa.stattools import ljungbox
-from statsmodels.tsa.stattools import zivot_andrews
+from statsmodels.tsa.stattools import adfuller, kpss, durbin_watson, acf, q_stat
+from statsmodels.tsa.stattools import ljungbox, zivot_andrews
+from arch.unitroot import PhillipsPerron
 
 st.title('Comprehensive Stationarity Tests')
 
@@ -44,13 +44,16 @@ if uploaded_file is not None:
         st.write(f"Lags used: {kpss_lag}")
 
         # Perform Phillips-Perron (PP) Test
-        pp_result = phillips_perron(series)
+        pp_test = PhillipsPerron(series)
+        pp_statistic = pp_test.stat
+        pp_pvalue = pp_test.pvalue
         st.write("### Phillips-Perron (PP) Test Results:")
-        st.write(f"PP Statistic: {pp_result[0]}")
-        st.write(f"p-value: {pp_result[1]}")
+        st.write(f"PP Statistic: {pp_statistic}")
+        st.write(f"p-value: {pp_pvalue}")
         st.write("Critical Values:")
-        for key, value in pp_result[4].items():
-            st.write(f"   {key}: {value}")
+        st.write("   1%: ", pp_test.critical_values[1])
+        st.write("   5%: ", pp_test.critical_values[5])
+        st.write("   10%: ", pp_test.critical_values[10])
 
         # Perform Zivot-Andrews Test
         za_result = zivot_andrews(series)
@@ -98,7 +101,7 @@ if uploaded_file is not None:
         
         # PP Test Interpretation
         st.write("#### Phillips-Perron (PP) Test Interpretation:")
-        if pp_result[1] < 0.05:
+        if pp_pvalue < 0.05:
             st.write("The p-value is less than 0.05, indicating that we reject the null hypothesis.")
             st.write("Conclusion: The time series is stationary according to the PP test.")
         else:
