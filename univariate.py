@@ -56,5 +56,6 @@ st.title("Decision-Making Guidelines")
 st.subheader("To decide whether to go for time series analysis or not")
 st.write("""
 -Stationary Time Series: If the series is stationary, it is suitable for time series modeling techniques like ARIMA.
+
 -Non-Stationary Time Series: If the series is non-stationary, consider differencing the data, removing trends, or using other transformations to achieve stationarity before modeling.
 """)
