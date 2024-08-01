@@ -1,10 +1,10 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from statsmodels.tsa.stattools import adfuller
+from statsmodels.tsa.stattools import adfuller, kpss
 import matplotlib.pyplot as plt
 
-st.title('Augmented Dickey-Fuller (ADF) Test for Stationarity')
+st.title('Stationarity Tests: ADF and KPSS')
 
 # File upload
 uploaded_file = st.file_uploader("Upload your file (CSV, XLSX, or XLS)", type=["csv", "xlsx", "xls"])
@@ -20,28 +20,44 @@ if uploaded_file is not None:
     st.write(data.head())
 
     # Select column for testing
-    column = st.selectbox("Select the column for ADF Test", data.columns)
+    column = st.selectbox("Select the column for Tests", data.columns)
     
-    if st.button("Run ADF Test"):
+    if st.button("Run ADF and KPSS Tests"):
         series = data[column].dropna()  # Dropping NA values for testing
         
         # Perform ADF test
-        result = adfuller(series)
-        
-        st.write(f"ADF Statistic: {result[0]}")
-        st.write(f"p-value: {result[1]}")
+        adf_result = adfuller(series)
+        st.write("### ADF Test Results:")
+        st.write(f"ADF Statistic: {adf_result[0]}")
+        st.write(f"p-value: {adf_result[1]}")
         st.write("Critical Values:")
-        for key, value in result[4].items():
+        for key, value in adf_result[4].items():
             st.write(f"   {key}: {value}")
         
-        # Interpretation
-        st.subheader("Interpretation:")
-        if result[1] < 0.05:
+        # Perform KPSS test
+        kpss_result, kpss_p_value, kpss_lag = kpss(series, regression='c', nlags='auto')
+        st.write("### KPSS Test Results:")
+        st.write(f"KPSS Statistic: {kpss_result}")
+        st.write(f"p-value: {kpss_p_value}")
+        st.write(f"Lags used: {kpss_lag}")
+
+        # Interpret ADF results
+        st.subheader("ADF Test Interpretation:")
+        if adf_result[1] < 0.05:
             st.write("The p-value is less than 0.05, indicating that we reject the null hypothesis.")
-            st.write("Conclusion: The time series is stationary.")
+            st.write("Conclusion: The time series is stationary according to the ADF test.")
         else:
             st.write("The p-value is greater than 0.05, indicating that we fail to reject the null hypothesis.")
-            st.write("Conclusion: The time series is non-stationary.")
+            st.write("Conclusion: The time series is non-stationary according to the ADF test.")
+        
+        # Interpret KPSS results
+        st.subheader("KPSS Test Interpretation:")
+        if kpss_p_value < 0.05:
+            st.write("The p-value is less than 0.05, indicating that we reject the null hypothesis.")
+            st.write("Conclusion: The time series is non-stationary according to the KPSS test.")
+        else:
+            st.write("The p-value is greater than 0.05, indicating that we fail to reject the null hypothesis.")
+            st.write("Conclusion: The time series is stationary according to the KPSS test.")
         
         # Plot the series
         st.subheader("Time Series Plot")
@@ -49,13 +65,3 @@ if uploaded_file is not None:
         ax.plot(series)
         ax.set_title(f'Time Series Plot for {column}')
         st.pyplot(fig)
-
-# Discussion Section
-st.title("Decision-Making Guidelines")
-
-st.subheader("To decide whether to go for time series analysis or not")
-st.write("""
--Stationary Time Series: If the series is stationary, it is suitable for time series modeling techniques like ARIMA.
-
--Non-Stationary Time Series: If the series is non-stationary, consider differencing the data, removing trends, or using other transformations to achieve stationarity before modeling.
-""")
