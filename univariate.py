@@ -1,10 +1,10 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from statsmodels.tsa.stattools import adfuller, kpss, adfuller, phillips_perron, durbin_watson, acf, q_stat
+import matplotlib.pyplot as plt
+from statsmodels.tsa.stattools import adfuller, kpss, phillips_perron, durbin_watson, acf, q_stat
 from statsmodels.tsa.stattools import ljungbox
 from statsmodels.tsa.stattools import zivot_andrews
-import matplotlib.pyplot as plt
 
 st.title('Comprehensive Stationarity Tests')
 
@@ -37,9 +37,9 @@ if uploaded_file is not None:
             st.write(f"   {key}: {value}")
 
         # Perform KPSS test
-        kpss_result, kpss_p_value, kpss_lag = kpss(series, regression='c', nlags='auto')
+        kpss_stat, kpss_p_value, kpss_lag = kpss(series, regression='c', nlags='auto')
         st.write("### Kwiatkowski-Phillips-Schmidt-Shin (KPSS) Test Results:")
-        st.write(f"KPSS Statistic: {kpss_result}")
+        st.write(f"KPSS Statistic: {kpss_stat}")
         st.write(f"p-value: {kpss_p_value}")
         st.write(f"Lags used: {kpss_lag}")
 
@@ -62,8 +62,6 @@ if uploaded_file is not None:
             st.write(f"   {key}: {value}")
 
         # Perform Variance Ratio Test
-        # This is a simplified placeholder; actual implementation may require more detailed coding
-        # The variance ratio test implementation is more complex and is not directly available in common libraries
         st.write("### Variance Ratio Test")
         st.write("Variance Ratio Test is not implemented in this code. Please use specialized packages or methods.")
 
