@@ -1,10 +1,9 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import statsmodels.api as sm
-from statsmodels.tsa.vector_error_correction import cajo_test
+from statsmodels.tsa.api import VAR
 from statsmodels.tsa.stattools import adfuller
-from statsmodels.tsa.api import OLS
+from statsmodels.tsa.vector_ar.vecm import cajo_test
 import matplotlib.pyplot as plt
 
 def load_data():
@@ -16,10 +15,10 @@ def load_data():
 
 def perform_johansen_test(df):
     st.write("Performing Johansen Cointegration Test...")
-    # Johansen test requires a specific format and parameters, adjust as needed
-    # Here is a sample usage; adapt parameters and details for your specific case
-    result = sm.tsa.cajo(df, det_order=0, k_ar_diff=1)  # Example parameters
-    st.write(result.summary())
+    model = VAR(df)
+    results = model.fit(maxlags=15, ic='aic')
+    johansen_test = results.test_causality(0, 'all', kind='f', verbose=True)
+    st.write(johansen_test)
 
 def perform_engle_granger_test(df):
     st.write("Performing Engle-Granger Two-Step Cointegration Test...")
@@ -30,7 +29,7 @@ def perform_engle_granger_test(df):
             col1, col2 = columns[i], columns[j]
             X = df[col1]
             y = df[col2]
-            model = OLS(y, sm.add_constant(X)).fit()
+            model = sm.OLS(y, sm.add_constant(X)).fit()
             residuals = model.resid
             adf_result = adfuller(residuals)
             results[f"{col1} & {col2}"] = adf_result
