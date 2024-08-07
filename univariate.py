@@ -75,7 +75,7 @@ if uploaded_file is not None:
         ljung_box_result = acorr_ljungbox(series, lags=[20], return_df=True)
         lb_pvalue = ljung_box_result['lb_pvalue'].values[-1]
         lb_interpretation = "Significant Autocorrelation" if lb_pvalue < 0.05 else "No Significant Autocorrelation"
-        results.append(["Ljung-Box Test", np.nan, lb_pvalue, lb_interpretation, "-", "-", "-"])
+        results.append(["Ljung-Box Test", np.nan, lb_pvalue, lb_interpretation, "-", "-", "-"]
 
         # Create results DataFrame
         results_df = pd.DataFrame(results, columns=["Test", "Test Statistic", "p-value", "Interpretation",
