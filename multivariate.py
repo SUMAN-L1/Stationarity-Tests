@@ -1,9 +1,10 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from statsmodels.tsa.johansen import cajo_test
+import statsmodels.api as sm
+from statsmodels.tsa.vector_error_correction import cajo_test
 from statsmodels.tsa.stattools import adfuller
-from statsmodels.tsa.api import EngleGranger
+from statsmodels.tsa.api import OLS
 import matplotlib.pyplot as plt
 
 def load_data():
@@ -15,20 +16,30 @@ def load_data():
 
 def perform_johansen_test(df):
     st.write("Performing Johansen Cointegration Test...")
-    result = cajo_test(df, det_order=-1, k_ar_diff=1)  # Example parameters
+    # Johansen test requires a specific format and parameters, adjust as needed
+    # Here is a sample usage; adapt parameters and details for your specific case
+    result = sm.tsa.cajo(df, det_order=0, k_ar_diff=1)  # Example parameters
     st.write(result.summary())
 
 def perform_engle_granger_test(df):
     st.write("Performing Engle-Granger Two-Step Cointegration Test...")
     results = {}
-    for col1 in df.columns:
-        for col2 in df.columns:
-            if col1 != col2:
-                model = EngleGranger(df[col1], df[col2])
-                results[f"{col1} & {col2}"] = model
+    columns = df.columns
+    for i in range(len(columns)):
+        for j in range(i + 1, len(columns)):
+            col1, col2 = columns[i], columns[j]
+            X = df[col1]
+            y = df[col2]
+            model = OLS(y, sm.add_constant(X)).fit()
+            residuals = model.resid
+            adf_result = adfuller(residuals)
+            results[f"{col1} & {col2}"] = adf_result
+
     for pair, result in results.items():
         st.write(f"Results for pair: {pair}")
-        st.write(result.summary())
+        st.write(f"ADF Statistic: {result[0]}")
+        st.write(f"p-value: {result[1]}")
+        st.write(f"Critical Values: {result[4]}")
 
 def main():
     st.title("Time Series Stationarity and Cointegration Tests")
