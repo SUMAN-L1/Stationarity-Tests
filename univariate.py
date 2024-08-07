@@ -43,13 +43,6 @@ if uploaded_file is not None:
         for key, value in adf_critical_values.items():
             st.write(f"   {key}: {value}")
         st.write(f"Interpretation: {adf_interpretation}")
-
-        # Plot ADF Test Results
-        fig, ax = plt.subplots()
-        ax.plot(series)
-        ax.set_title(f'Time Series Plot for ADF Test ({column})')
-        st.pyplot(fig)
-        
         results.append(["ADF Test", adf_statistic, adf_pvalue, adf_interpretation])
 
         # Perform KPSS Test
@@ -65,13 +58,6 @@ if uploaded_file is not None:
         for key, value in kpss_crit.items():
             st.write(f"   {key}: {value}")
         st.write(f"Interpretation: {kpss_interpretation}")
-
-        # Plot KPSS Test Results
-        fig, ax = plt.subplots()
-        ax.plot(series)
-        ax.set_title(f'Time Series Plot for KPSS Test ({column})')
-        st.pyplot(fig)
-
         results.append(["KPSS Test", kpss_stat, kpss_p_value, kpss_interpretation])
 
         # Perform Phillips-Perron (PP) Test
@@ -89,13 +75,6 @@ if uploaded_file is not None:
         for key, value in pp_critical_values.items():
             st.write(f"   {key}%: {value}")
         st.write(f"Interpretation: {pp_interpretation}")
-
-        # Plot PP Test Results
-        fig, ax = plt.subplots()
-        ax.plot(series)
-        ax.set_title(f'Time Series Plot for PP Test ({column})')
-        st.pyplot(fig)
-
         results.append(["Phillips-Perron Test", pp_statistic, pp_pvalue, pp_interpretation])
 
         # Perform Zivot-Andrews Test
@@ -113,13 +92,6 @@ if uploaded_file is not None:
         for key, value in za_critical_values.items():
             st.write(f"   {key}: {value}")
         st.write(f"Interpretation: {za_interpretation}")
-
-        # Plot Zivot-Andrews Test Results
-        fig, ax = plt.subplots()
-        ax.plot(series)
-        ax.set_title(f'Time Series Plot for Zivot-Andrews Test ({column})')
-        st.pyplot(fig)
-
         results.append(["Zivot-Andrews Test", za_statistic, za_pvalue, za_interpretation])
 
         # Perform Variance Ratio Test
@@ -133,13 +105,6 @@ if uploaded_file is not None:
         st.write(f"Variance Ratio: {vr_statistic}")
         st.write(f"p-value: {vr_pvalue}")
         st.write(f"Interpretation: {vr_interpretation}")
-
-        # Plot Variance Ratio Test Results
-        fig, ax = plt.subplots()
-        ax.plot(series)
-        ax.set_title(f'Time Series Plot for Variance Ratio Test ({column})')
-        st.pyplot(fig)
-
         results.append(["Variance Ratio Test", vr_statistic, vr_pvalue, vr_interpretation])
 
         # Perform Durbin-Watson Test
@@ -152,13 +117,6 @@ if uploaded_file is not None:
                              "Negative Autocorrelation")
         st.write(f"Durbin-Watson Statistic: {dw_statistic}")
         st.write(f"Interpretation: {dw_interpretation}")
-
-        # Plot Durbin-Watson Test Results
-        fig, ax = plt.subplots()
-        ax.plot(series)
-        ax.set_title(f'Time Series Plot for Durbin-Watson Test ({column})')
-        st.pyplot(fig)
-
         results.append(["Durbin-Watson Test", dw_statistic, np.nan, dw_interpretation])
 
         # Perform Ljung-Box Test
@@ -170,13 +128,6 @@ if uploaded_file is not None:
         lb_interpretation = "Significant Autocorrelation" if lb_pvalue < 0.05 else "No Significant Autocorrelation"
         st.write(ljung_box_result)
         st.write(f"Interpretation: {lb_interpretation}")
-
-        # Plot Ljung-Box Test Results
-        fig, ax = plt.subplots()
-        ax.plot(series)
-        ax.set_title(f'Time Series Plot for Ljung-Box Test ({column})')
-        st.pyplot(fig)
-
         results.append(["Ljung-Box Test", np.nan, lb_pvalue, lb_interpretation])
 
         # Display results DataFrame
