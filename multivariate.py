@@ -43,8 +43,8 @@ class Johansen:
 
         try:
             inverse = np.linalg.pinv(x_diff_lags)
-        except:
-            print("Unable to take inverse of x_diff_lags.")
+        except np.linalg.LinAlgError:
+            st.error("Unable to take inverse of x_diff_lags.")
             return None
 
         u = x_diff - np.dot(x_diff_lags, np.dot(inverse, x_diff))
@@ -59,8 +59,8 @@ class Johansen:
         try:
             Svv_inv = np.linalg.inv(Svv)
             Suu_inv = np.linalg.inv(Suu)
-        except:
-            print("Unable to take inverse of covariance matrices.")
+        except np.linalg.LinAlgError:
+            st.error("Unable to take inverse of covariance matrices.")
             return None
 
         cov_prod = np.dot(Svv_inv, np.dot(Svu, np.dot(Suu_inv, Suv)))
@@ -70,8 +70,8 @@ class Johansen:
         cholesky_factor = np.linalg.cholesky(evec_Svv_evec)
         try:
             eigenvectors = np.dot(eigenvectors, np.linalg.inv(cholesky_factor.T))
-        except:
-            print("Unable to take the inverse of the Cholesky factor.")
+        except np.linalg.LinAlgError:
+            st.error("Unable to take the inverse of the Cholesky factor.")
             return None
 
         indices_ordered = np.argsort(eigenvalues)
@@ -100,8 +100,8 @@ class Johansen:
 
         try:
             eigenvectors, eigenvalues = self.mle()
-        except:
-            print("Unable to obtain possible cointegrating relations.")
+        except Exception as e:
+            st.error(f"Unable to obtain possible cointegrating relations: {e}")
             return None
 
         rejected_r_values = []
@@ -112,7 +112,7 @@ class Johansen:
         return eigenvectors, rejected_r_values
 
 def load_data():
-    uploaded_file = st.file_uploader("Upload your CSV, xlsx, xls file", type=["csv","xlsxl","xls"])
+    uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
     if uploaded_file is not None:
         df = pd.read_csv(uploaded_file, index_col=0, parse_dates=True)
         return df
@@ -127,13 +127,18 @@ def perform_johansen_test(df):
     trace = True if trace == "Trace" else False
 
     johansen_test = Johansen(df.values, model=model, k=k, trace=trace)
-    eigenvectors, rejected_r_values = johansen_test.johansen()
-
-    st.write("Johansen Test Results:")
-    st.write("Rejected number of cointegrating vectors:")
-    st.write(rejected_r_values)
-    st.write("Eigenvectors (cointegrating vectors):")
-    st.write(eigenvectors)
+    try:
+        eigenvectors, rejected_r_values = johansen_test.johansen()
+        if eigenvectors is not None:
+            st.write("Johansen Test Results:")
+            st.write("Rejected number of cointegrating vectors:")
+            st.write(rejected_r_values)
+            st.write("Eigenvectors (cointegrating vectors):")
+            st.write(eigenvectors)
+        else:
+            st.write("No results available.")
+    except Exception as e:
+        st.error(f"An error occurred during the Johansen test: {e}")
 
 def main():
     st.title("Johansen Cointegration Test")
