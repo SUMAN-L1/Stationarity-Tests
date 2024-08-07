@@ -2,10 +2,11 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from statsmodels.tsa.stattools import adfuller, kpss, zivot_andrews
+from statsmodels.tsa.stattools import adfuller, kpss
 from arch.unitroot import PhillipsPerron, VarianceRatio
 from statsmodels.stats.stattools import durbin_watson
 from statsmodels.stats.diagnostic import acorr_ljungbox
+from statsmodels.tsa.stattools import zivot_andrews
 
 st.title('Comprehensive Stationarity Tests')
 
@@ -54,9 +55,9 @@ if uploaded_file is not None:
 
         # Perform Zivot-Andrews Test
         za_result = zivot_andrews(series)
-        za_critical_values = za_result[3]
-        za_interpretation = "Stationary" if za_result[1] < 0.05 else "Non-stationary"
-        results.append(["Zivot-Andrews Test", za_result[0], za_result[1], za_result[2],
+        za_statistic, za_pvalue, za_intercept, za_critical_values = za_result
+        za_interpretation = "Stationary" if za_pvalue < 0.05 else "Non-stationary"
+        results.append(["Zivot-Andrews Test", za_statistic, za_pvalue, za_interpretation,
                         za_critical_values.get('1%'), za_critical_values.get('5%'), za_critical_values.get('10%')])
 
         # Perform Variance Ratio Test
