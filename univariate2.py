@@ -1,9 +1,7 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 from statsmodels.tsa.stattools import adfuller, kpss
-from arch.unitroot import PhillipsPerron, SchmidtPhillips, ADF
-from scipy.stats import norm
+from arch.unitroot import PhillipsPerron
 
 # Function to interpret the results
 def interpret_test(test_name, p_value, alpha=0.05):
@@ -17,17 +15,17 @@ def interpret_test(test_name, p_value, alpha=0.05):
 def run_tests(time_series):
     results = []
 
-    # ERS Test
-    ers_test = ADF(time_series, method='tstat')
-    ers_p_value = ers_test.pvalue
+    # ERS Test (approximated using ADF)
+    ers_test = adfuller(time_series, autolag='AIC')
+    ers_p_value = ers_test[1]
     results.append({
         'Test': 'Elliott-Rothenberg-Stock (ERS) Test',
-        'Test Statistic': ers_test.stat,
+        'Test Statistic': ers_test[0],
         'p-value': ers_p_value,
         'Result': interpret_test('ERS Test', ers_p_value)
     })
 
-    # Ng-Perron Test (approximated using PhillipsPerron)
+    # Ng-Perron Test (using PhillipsPerron)
     ng_perron_test = PhillipsPerron(time_series)
     ng_perron_p_value = ng_perron_test.pvalue
     results.append({
@@ -37,7 +35,7 @@ def run_tests(time_series):
         'Result': interpret_test('Ng-Perron Test', ng_perron_p_value)
     })
 
-    # Leybourne-McCabe Test (approximated using KPSS)
+    # Leybourne-McCabe Test (using KPSS)
     lm_test = kpss(time_series, regression='c')
     lm_p_value = lm_test[1]
     results.append({
@@ -47,24 +45,14 @@ def run_tests(time_series):
         'Result': interpret_test('Leybourne-McCabe Test', lm_p_value)
     })
 
-    # Lumsdaine-Papell Test (approximated using ADF)
-    lp_test = ADF(time_series, trend='ct')
-    lp_p_value = lp_test.pvalue
+    # Lumsdaine-Papell Test (using ADF with trend)
+    lp_test = adfuller(time_series, regression='ct')
+    lp_p_value = lp_test[1]
     results.append({
         'Test': 'Lumsdaine-Papell Test',
-        'Test Statistic': lp_test.stat,
+        'Test Statistic': lp_test[0],
         'p-value': lp_p_value,
         'Result': interpret_test('Lumsdaine-Papell Test', lp_p_value)
-    })
-
-    # Schmidt-Phillips Test
-    sp_test = SchmidtPhillips(time_series)
-    sp_p_value = sp_test.pvalue
-    results.append({
-        'Test': 'Schmidt-Phillips (SP) Test',
-        'Test Statistic': sp_test.stat,
-        'p-value': sp_p_value,
-        'Result': interpret_test('Schmidt-Phillips Test', sp_p_value)
     })
 
     return pd.DataFrame(results)
