@@ -1,11 +1,114 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import statsmodels.api as sm
-from statsmodels.tsa.api import VAR
-from statsmodels.tsa.vector_ar.vecm import Johansen
-from statsmodels.tsa.stattools import adfuller
-import matplotlib.pyplot as plt
+import critical_values  # Ensure this module is available in your environment
+
+# Custom Johansen class
+class Johansen:
+    def __init__(self, x, model, k=1, trace=True, significance_level=1):
+        self.x = x
+        self.k = k
+        self.trace = trace
+        self.model = model
+        self.significance_level = significance_level
+
+        if trace:
+            key = f"TRACE_{model}"
+        else:
+            key = f"MAX_EVAL_{model}"
+
+        critical_values_str = critical_values.mapping[key]
+        select_critical_values = np.array(
+            critical_values_str.split(),
+            float).reshape(-1, 3)
+
+        self.critical_values = select_critical_values[:, significance_level]
+
+    def mle(self):
+        x_diff = np.diff(self.x, axis=0)
+        x_diff_lags = lagmat(x_diff, self.k, trim='both')
+        x_lag = lagmat(self.x, 1, trim='both')
+        x_diff = x_diff[self.k:]
+        x_lag = x_lag[self.k:]
+
+        if self.model != 0:
+            ones = np.ones((x_diff_lags.shape[0], 1))
+            x_diff_lags = np.append(x_diff_lags, ones, axis=1)
+
+        if self.model in (3, 4):
+            times = np.asarray(range(x_diff_lags.shape[0])).reshape((-1, 1))
+            x_diff_lags = np.append(x_diff_lags, times, axis=1)
+
+        try:
+            inverse = np.linalg.pinv(x_diff_lags)
+        except:
+            print("Unable to take inverse of x_diff_lags.")
+            return None
+
+        u = x_diff - np.dot(x_diff_lags, np.dot(inverse, x_diff))
+        v = x_lag - np.dot(x_diff_lags, np.dot(inverse, x_lag))
+
+        t = x_diff_lags.shape[0]
+        Svv = np.dot(v.T, v) / t
+        Suu = np.dot(u.T, u) / t
+        Suv = np.dot(u.T, v) / t
+        Svu = Suv.T
+
+        try:
+            Svv_inv = np.linalg.inv(Svv)
+            Suu_inv = np.linalg.inv(Suu)
+        except:
+            print("Unable to take inverse of covariance matrices.")
+            return None
+
+        cov_prod = np.dot(Svv_inv, np.dot(Svu, np.dot(Suu_inv, Suv)))
+        eigenvalues, eigenvectors = np.linalg.eig(cov_prod)
+
+        evec_Svv_evec = np.dot(eigenvectors.T, np.dot(Svv, eigenvectors))
+        cholesky_factor = np.linalg.cholesky(evec_Svv_evec)
+        try:
+            eigenvectors = np.dot(eigenvectors, np.linalg.inv(cholesky_factor.T))
+        except:
+            print("Unable to take the inverse of the Cholesky factor.")
+            return None
+
+        indices_ordered = np.argsort(eigenvalues)
+        indices_ordered = np.flipud(indices_ordered)
+        eigenvalues = eigenvalues[indices_ordered]
+        eigenvectors = eigenvectors[:, indices_ordered]
+
+        return eigenvectors, eigenvalues
+
+    def h_test(self, eigenvalues, r):
+        nobs, m = self.x.shape
+        t = nobs - self.k - 1
+
+        if self.trace:
+            m = len(eigenvalues)
+            statistic = -t * np.sum(np.log(np.ones(m) - eigenvalues)[r:])
+        else:
+            statistic = -t * np.sum(np.log(1 - eigenvalues[r]))
+
+        critical_value = self.critical_values[m - r - 1]
+
+        return statistic > critical_value
+
+    def johansen(self):
+        nobs, m = self.x.shape
+
+        try:
+            eigenvectors, eigenvalues = self.mle()
+        except:
+            print("Unable to obtain possible cointegrating relations.")
+            return None
+
+        rejected_r_values = []
+        for r in range(m):
+            if self.h_test(eigenvalues, r):
+                rejected_r_values.append(r)
+
+        return eigenvectors, rejected_r_values
+
 
 def load_data():
     uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
@@ -16,54 +119,31 @@ def load_data():
 
 def perform_johansen_test(df):
     st.write("Performing Johansen Cointegration Test...")
-    johansen_test = Johansen(df)
-    result = johansen_test.fit(maxlags=15, det_order=0)  # Adjust parameters as needed
+    model = st.selectbox("Select model", [0, 1, 2, 3, 4])
+    k = st.slider("Select number of lags", min_value=1, max_value=10, value=1)
+    trace = st.radio("Select trace or max eigenvalue statistic", ["Trace", "Max Eigenvalue"])
+    
+    trace = True if trace == "Trace" else False
+    
+    johansen_test = Johansen(df.values, model=model, k=k, trace=trace)
+    eigenvectors, rejected_r_values = johansen_test.johansen()
     
     st.write("Johansen Test Results:")
-    st.write("Trace Statistics:")
-    st.write(result.lr1)
-    st.write("Critical Values (Trace):")
-    st.write(result.cvt)
-    
-    st.write("Maximum Eigenvalue Statistics:")
-    st.write(result.lr2)
-    st.write("Critical Values (Max Eigenvalue):")
-    st.write(result.cvm)
-
-def perform_engle_granger_test(df):
-    st.write("Performing Engle-Granger Two-Step Cointegration Test...")
-    results = {}
-    columns = df.columns
-    for i in range(len(columns)):
-        for j in range(i + 1, len(columns)):
-            col1, col2 = columns[i], columns[j]
-            X = df[col1]
-            y = df[col2]
-            model = sm.OLS(y, sm.add_constant(X)).fit()
-            residuals = model.resid
-            adf_result = adfuller(residuals)
-            results[f"{col1} & {col2}"] = adf_result
-
-    for pair, result in results.items():
-        st.write(f"Results for pair: {pair}")
-        st.write(f"ADF Statistic: {result[0]}")
-        st.write(f"p-value: {result[1]}")
-        st.write(f"Critical Values: {result[4]}")
+    st.write("Rejected number of cointegrating vectors:")
+    st.write(rejected_r_values)
+    st.write("Eigenvectors (cointegrating vectors):")
+    st.write(eigenvectors)
 
 def main():
-    st.title("Time Series Stationarity and Cointegration Tests")
+    st.title("Johansen Cointegration Test")
 
     df = load_data()
     if df is not None:
         st.write("Data preview:")
         st.write(df.head())
 
-        test_type = st.radio("Select the test to perform", ("Johansen Test", "Engle-Granger Test"))
-
-        if test_type == "Johansen Test":
+        if st.button("Perform Johansen Test"):
             perform_johansen_test(df)
-        elif test_type == "Engle-Granger Test":
-            perform_engle_granger_test(df)
     else:
         st.write("Please upload a CSV file with your time series data.")
 
