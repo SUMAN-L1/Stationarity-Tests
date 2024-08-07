@@ -148,9 +148,9 @@ def run_tests(time_series):
     return pd.DataFrame(results)
 
 # Streamlit app
-st.title('Univariate Time Series Stationarity Tests')
+st.title('Univariate Time Series Stationarity Tests by [SUMANECON-GKVK]')
 
-uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
+uploaded_file = st.file_uploader("Choose a CSV, xlsx, xls file", type=["csv","xlsx","xls"])
 
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
