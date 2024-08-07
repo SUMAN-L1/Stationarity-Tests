@@ -112,7 +112,7 @@ class Johansen:
         return eigenvectors, rejected_r_values
 
 def load_data():
-    uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
+    uploaded_file = st.file_uploader("Upload your CSV, xlsx, xls file", type=["csv", "xlsx", "xls"])
     if uploaded_file is not None:
         df = pd.read_csv(uploaded_file, index_col=0, parse_dates=True)
         return df
