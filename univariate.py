@@ -55,7 +55,9 @@ if uploaded_file is not None:
 
         # Perform Zivot-Andrews Test
         za_result = zivot_andrews(series)
-        za_statistic, za_pvalue, za_intercept, za_critical_values = za_result
+        za_statistic = za_result[0]  # Test statistic
+        za_pvalue = za_result[1]     # p-value
+        za_critical_values = za_result[2]  # Critical values
         za_interpretation = "Stationary" if za_pvalue < 0.05 else "Non-stationary"
         results.append(["Zivot-Andrews Test", za_statistic, za_pvalue, za_interpretation,
                         za_critical_values.get('1%'), za_critical_values.get('5%'), za_critical_values.get('10%')])
