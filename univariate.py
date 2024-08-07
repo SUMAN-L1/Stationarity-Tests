@@ -81,8 +81,12 @@ if uploaded_file is not None:
         results.append(["Ljung-Box Test", np.nan, lb_pvalue, lb_interpretation, "-", "-", "-"])
 
         # Create results DataFrame
-        results_df = pd.DataFrame(results, columns=["Test", "Test Statistic", "p-value", "Interpretation",
-                                                    "Critical Value 1%", "Critical Value 5%", "Critical Value 10%"])
+        columns = ["Test", "Test Statistic", "p-value", "Interpretation",
+                   "Critical Value 1%", "Critical Value 5%", "Critical Value 10%"]
+        
+        # Ensure that each result has the same length
+        results = [result + ["-", "-", "-"] * (len(columns) - len(result)) for result in results]
+        results_df = pd.DataFrame(results, columns=columns)
         
         # Display results
         st.write("### Stationarity Test Results")
