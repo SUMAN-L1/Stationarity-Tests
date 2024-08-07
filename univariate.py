@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from statsmodels.tsa.stattools import adfuller, kpss, zivot_andrews
-from arch.unitroot import PhillipsPerron
+from arch.unitroot import PhillipsPerron, VarianceRatio
 from statsmodels.stats.stattools import durbin_watson
 from statsmodels.stats.diagnostic import acorr_ljungbox
 
@@ -68,8 +68,10 @@ if uploaded_file is not None:
             st.write(f"   {key}: {value}")
 
         # Perform Variance Ratio Test
-        st.write("### Variance Ratio Test")
-        st.write("Variance Ratio Test is not implemented in this code. Please use specialized packages or methods.")
+        vr_test = VarianceRatio(series, lags=2)
+        st.write("### Variance Ratio Test Results:")
+        st.write(f"Variance Ratio: {vr_test.vr}")
+        st.write(f"p-value: {vr_test.pvalue}")
 
         # Perform Durbin-Watson Test
         dw_statistic = durbin_watson(series)
@@ -122,7 +124,12 @@ if uploaded_file is not None:
         
         # Variance Ratio Test Interpretation
         st.write("#### Variance Ratio Test Interpretation:")
-        st.write("Variance Ratio Test is not implemented in this code. Please use specialized packages or methods.")
+        if vr_test.pvalue < 0.05:
+            st.write("The p-value is less than 0.05, indicating that we reject the null hypothesis.")
+            st.write("Conclusion: The time series is not a random walk according to the Variance Ratio test.")
+        else:
+            st.write("The p-value is greater than 0.05, indicating that we fail to reject the null hypothesis.")
+            st.write("Conclusion: The time series is a random walk according to the Variance Ratio test.")
 
         # Durbin-Watson Test Interpretation
         st.write("#### Durbin-Watson Test Interpretation:")
