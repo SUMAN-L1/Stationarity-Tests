@@ -56,7 +56,7 @@ if uploaded_file is not None:
         za_result = zivot_andrews(series)
         za_critical_values = za_result[3]
         za_interpretation = "Stationary" if za_result[1] < 0.05 else "Non-stationary"
-        results.append(["Zivot-Andrews Test", za_result[0], za_result[1], za_interpretation,
+        results.append(["Zivot-Andrews Test", za_result[0], za_result[1], za_result[2],
                         za_critical_values.get('1%'), za_critical_values.get('5%'), za_critical_values.get('10%')])
 
         # Perform Variance Ratio Test
@@ -75,7 +75,7 @@ if uploaded_file is not None:
         ljung_box_result = acorr_ljungbox(series, lags=[20], return_df=True)
         lb_pvalue = ljung_box_result['lb_pvalue'].values[-1]
         lb_interpretation = "Significant Autocorrelation" if lb_pvalue < 0.05 else "No Significant Autocorrelation"
-        results.append(["Ljung-Box Test", np.nan, lb_pvalue, lb_interpretation, "-", "-", "-"]
+        results.append(["Ljung-Box Test", np.nan, lb_pvalue, lb_interpretation, "-", "-", "-"])
 
         # Create results DataFrame
         results_df = pd.DataFrame(results, columns=["Test", "Test Statistic", "p-value", "Interpretation",
