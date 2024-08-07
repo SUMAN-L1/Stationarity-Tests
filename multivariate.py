@@ -11,7 +11,6 @@ class Johansen:
         self.model = model
         self.significance_level = significance_level
 
-        # Hard-coded critical values for simplicity
         critical_values_map = {
             "TRACE_0": [15.49, 20.20, 25.42],
             "TRACE_1": [20.20, 25.42, 30.40],
@@ -114,6 +113,7 @@ class Johansen:
 def load_data():
     uploaded_file = st.file_uploader("Upload your Excel file", type=["xlsx"])
     if uploaded_file is not None:
+        st.write("File uploaded successfully!")
         try:
             df = pd.read_excel(uploaded_file, index_col=0, parse_dates=True)
             return df
