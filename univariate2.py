@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from statsmodels.tsa.stattools import adfuller, kpss
-from arch.unitroot import ERS, PhillipsPerron, KPSS, SchmidtPhillips, ADF
+from arch.unitroot import PhillipsPerron, SchmidtPhillips, ADF
+from scipy.stats import norm
 
 # Function to interpret the results
 def interpret_test(test_name, p_value, alpha=0.05):
@@ -17,7 +18,7 @@ def run_tests(time_series):
     results = []
 
     # ERS Test
-    ers_test = ERS(time_series)
+    ers_test = ADF(time_series, method='tstat')
     ers_p_value = ers_test.pvalue
     results.append({
         'Test': 'Elliott-Rothenberg-Stock (ERS) Test',
@@ -26,7 +27,7 @@ def run_tests(time_series):
         'Result': interpret_test('ERS Test', ers_p_value)
     })
 
-    # Ng-Perron Test
+    # Ng-Perron Test (approximated using PhillipsPerron)
     ng_perron_test = PhillipsPerron(time_series)
     ng_perron_p_value = ng_perron_test.pvalue
     results.append({
@@ -36,18 +37,18 @@ def run_tests(time_series):
         'Result': interpret_test('Ng-Perron Test', ng_perron_p_value)
     })
 
-    # Leybourne-McCabe Test
-    lm_test = KPSS(time_series)
-    lm_p_value = lm_test.pvalue
+    # Leybourne-McCabe Test (approximated using KPSS)
+    lm_test = kpss(time_series, regression='c')
+    lm_p_value = lm_test[1]
     results.append({
         'Test': 'Leybourne-McCabe Test',
-        'Test Statistic': lm_test.stat,
+        'Test Statistic': lm_test[0],
         'p-value': lm_p_value,
         'Result': interpret_test('Leybourne-McCabe Test', lm_p_value)
     })
 
-    # Lumsdaine-Papell Test
-    lp_test = ADF(time_series)
+    # Lumsdaine-Papell Test (approximated using ADF)
+    lp_test = ADF(time_series, trend='ct')
     lp_p_value = lp_test.pvalue
     results.append({
         'Test': 'Lumsdaine-Papell Test',
@@ -69,9 +70,9 @@ def run_tests(time_series):
     return pd.DataFrame(results)
 
 # Streamlit app
-st.title('Univariate Time Series Stationarity Tests 2')
+st.title('Univariate Time Series Stationarity Tests')
 
-uploaded_file = st.file_uploader("Choose a CSV oo xlsx file", type=["csv","xlsx"])
+uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
 
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
@@ -89,4 +90,4 @@ if uploaded_file is not None:
 
         st.write("Interpretation:")
         for index, row in results_df.iterrows():
-            st
+            st.write(row['Result'])
