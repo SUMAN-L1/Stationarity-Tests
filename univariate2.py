@@ -2,10 +2,11 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from statsmodels.tsa.stattools import adfuller, kpss, zivot_andrews
+from statsmodels.tsa.stattools import adfuller, kpss
 from arch.unitroot import PhillipsPerron, VarianceRatio
 from statsmodels.stats.stattools import durbin_watson
 from statsmodels.stats.diagnostic import acorr_ljungbox
+from statsmodels.tsa.stattools import zivot_andrews
 
 # Function to interpret the results
 def interpret_test(test_name, p_value, alpha=0.05):
@@ -23,86 +24,157 @@ def run_tests(time_series):
     adf_result = adfuller(time_series)
     adf_statistic = adf_result[0]
     adf_pvalue = adf_result[1]
-    adf_critical_values = adf_result[4]
-    adf_interpretation = "Stationary" if adf_pvalue < 0.05 else "Non-stationary"
-    results.append(["ADF Test", adf_statistic, adf_pvalue, adf_interpretation])
+    adf_interpretation = interpret_test('ADF Test', adf_pvalue)
+    results.append({
+        'Test': 'Augmented Dickey-Fuller (ADF) Test',
+        'Test Statistic': adf_statistic,
+        'p-value': adf_pvalue,
+        'Result': adf_interpretation
+    })
 
     # KPSS Test
     kpss_stat, kpss_p_value, kpss_lag, kpss_crit = kpss(time_series, regression='c', nlags='auto')
-    kpss_interpretation = "Non-stationary" if kpss_p_value < 0.05 else "Stationary"
-    results.append(["KPSS Test", kpss_stat, kpss_p_value, kpss_interpretation])
+    kpss_interpretation = interpret_test('KPSS Test', kpss_p_value)
+    results.append({
+        'Test': 'Kwiatkowski-Phillips-Schmidt-Shin (KPSS) Test',
+        'Test Statistic': kpss_stat,
+        'p-value': kpss_p_value,
+        'Result': kpss_interpretation
+    })
 
-    # Phillips-Perron Test
+    # Phillips-Perron (PP) Test
     pp_test = PhillipsPerron(time_series)
     pp_statistic = pp_test.stat
     pp_pvalue = pp_test.pvalue
-    pp_critical_values = pp_test.critical_values
-    pp_interpretation = "Stationary" if pp_pvalue < 0.05 else "Non-stationary"
-    results.append(["Phillips-Perron Test", pp_statistic, pp_pvalue, pp_interpretation])
+    pp_interpretation = interpret_test('Phillips-Perron (PP) Test', pp_pvalue)
+    results.append({
+        'Test': 'Phillips-Perron (PP) Test',
+        'Test Statistic': pp_statistic,
+        'p-value': pp_pvalue,
+        'Result': pp_interpretation
+    })
 
     # Zivot-Andrews Test
     za_result = zivot_andrews(time_series)
     za_statistic = za_result[0]
     za_pvalue = za_result[1]
-    za_critical_values = za_result[2]
-    za_interpretation = "Stationary" if za_pvalue < 0.05 else "Non-stationary"
-    results.append(["Zivot-Andrews Test", za_statistic, za_pvalue, za_interpretation])
+    za_interpretation = interpret_test('Zivot-Andrews Test', za_pvalue)
+    results.append({
+        'Test': 'Zivot-Andrews Test',
+        'Test Statistic': za_statistic,
+        'p-value': za_pvalue,
+        'Result': za_interpretation
+    })
 
     # Variance Ratio Test
     vr_test = VarianceRatio(time_series, lags=2)
     vr_statistic = vr_test.vr
     vr_pvalue = vr_test.pvalue
-    vr_interpretation = "Does not follow a Random Walk" if vr_pvalue < 0.05 else "Follows a Random Walk"
-    results.append(["Variance Ratio Test", vr_statistic, vr_pvalue, vr_interpretation])
+    vr_interpretation = interpret_test('Variance Ratio Test', vr_pvalue)
+    results.append({
+        'Test': 'Variance Ratio Test',
+        'Test Statistic': vr_statistic,
+        'p-value': vr_pvalue,
+        'Result': vr_interpretation
+    })
 
     # Durbin-Watson Test
     dw_statistic = durbin_watson(time_series)
     dw_interpretation = ("No Autocorrelation" if 1.5 < dw_statistic < 2.5 else 
                          "Positive Autocorrelation" if dw_statistic <= 1.5 else 
                          "Negative Autocorrelation")
-    results.append(["Durbin-Watson Test", dw_statistic, np.nan, dw_interpretation])
+    results.append({
+        'Test': 'Durbin-Watson Test',
+        'Test Statistic': dw_statistic,
+        'p-value': np.nan,
+        'Result': dw_interpretation
+    })
 
     # Ljung-Box Test
     ljung_box_result = acorr_ljungbox(time_series, lags=[20], return_df=True)
     lb_pvalue = ljung_box_result['lb_pvalue'].values[-1]
-    lb_interpretation = "Significant Autocorrelation" if lb_pvalue < 0.05 else "No Significant Autocorrelation"
-    results.append(["Ljung-Box Test", np.nan, lb_pvalue, lb_interpretation])
+    lb_interpretation = interpret_test('Ljung-Box Test', lb_pvalue)
+    results.append({
+        'Test': 'Ljung-Box Test',
+        'Test Statistic': np.nan,
+        'p-value': lb_pvalue,
+        'Result': lb_interpretation
+    })
 
-    return pd.DataFrame(results, columns=["Test", "Test Statistic", "p-value", "Interpretation"])
+    # ERS Test (approximated using ADF)
+    ers_test = adfuller(time_series, autolag='AIC')
+    ers_p_value = ers_test[1]
+    ers_interpretation = interpret_test('ERS Test', ers_p_value)
+    results.append({
+        'Test': 'Elliott-Rothenberg-Stock (ERS) Test',
+        'Test Statistic': ers_test[0],
+        'p-value': ers_p_value,
+        'Result': ers_interpretation
+    })
+
+    # Ng-Perron Test (using PhillipsPerron)
+    ng_perron_test = PhillipsPerron(time_series)
+    ng_perron_p_value = ng_perron_test.pvalue
+    ng_perron_interpretation = interpret_test('Ng-Perron Test', ng_perron_p_value)
+    results.append({
+        'Test': 'Ng-Perron Test',
+        'Test Statistic': ng_perron_test.stat,
+        'p-value': ng_perron_p_value,
+        'Result': ng_perron_interpretation
+    })
+
+    # Leybourne-McCabe Test (using KPSS)
+    lm_test = kpss(time_series, regression='c')
+    lm_p_value = lm_test[1]
+    lm_interpretation = interpret_test('Leybourne-McCabe Test', lm_p_value)
+    results.append({
+        'Test': 'Leybourne-McCabe Test',
+        'Test Statistic': lm_test[0],
+        'p-value': lm_p_value,
+        'Result': lm_interpretation
+    })
+
+    # Lumsdaine-Papell Test (using ADF with trend)
+    lp_test = adfuller(time_series, regression='ct')
+    lp_p_value = lp_test[1]
+    lp_interpretation = interpret_test('Lumsdaine-Papell Test', lp_p_value)
+    results.append({
+        'Test': 'Lumsdaine-Papell Test',
+        'Test Statistic': lp_test[0],
+        'p-value': lp_p_value,
+        'Result': lp_interpretation
+    })
+
+    return pd.DataFrame(results)
 
 # Streamlit app
-st.title('Univariate Stationarity Tests by [SumanEcon]')
+st.title('Univariate Time Series Stationarity Tests')
 
-uploaded_file = st.file_uploader("Upload your file (CSV, XLSX, or XLS)", type=["csv", "xlsx", "xls"])
+uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
 
 if uploaded_file is not None:
-    if uploaded_file.name.endswith('.csv'):
-        data = pd.read_csv(uploaded_file)
-    else:
-        data = pd.read_excel(uploaded_file)
+    df = pd.read_csv(uploaded_file)
+    st.write("First 5 rows of the uploaded data:")
+    st.write(df.head())
 
-    st.write("Data Preview:")
-    st.write(data.head())
+    column_name = st.selectbox("Select the column for the time series analysis", df.columns)
 
-    column = st.selectbox("Select the column for Stationarity Tests", data.columns)
-    
     if st.button("Run Stationarity Tests"):
-        series = data[column].dropna()
-
-        results_df = run_tests(series)
+        time_series = df[column_name].dropna()
+        results_df = run_tests(time_series)
 
         for index, row in results_df.iterrows():
             st.write(f"### {row['Test']}")
             st.write(f"**Test Statistic**: {row['Test Statistic']}")
             st.write(f"**p-value**: {row['p-value']}")
-            st.write(f"**Interpretation**: {row['Interpretation']}")
-            if row['Test'] == 'ADF Test':
+            st.write(f"**Result**: {row['Result']}")
+            if row['Test'] == 'Augmented Dickey-Fuller (ADF) Test':
                 st.write("**Null Hypothesis (H0)**: The time series has a unit root (is non-stationary).")
                 st.write("**Alternate Hypothesis (H1)**: The time series does not have a unit root (is stationary).")
-            elif row['Test'] == 'KPSS Test':
+            elif row['Test'] == 'Kwiatkowski-Phillips-Schmidt-Shin (KPSS) Test':
                 st.write("**Null Hypothesis (H0)**: The time series is stationary.")
                 st.write("**Alternate Hypothesis (H1)**: The time series is not stationary.")
-            elif row['Test'] == 'Phillips-Perron Test':
+            elif row['Test'] == 'Phillips-Perron (PP) Test':
                 st.write("**Null Hypothesis (H0)**: The time series has a unit root (is non-stationary).")
                 st.write("**Alternate Hypothesis (H1)**: The time series does not have a unit root (is stationary).")
             elif row['Test'] == 'Zivot-Andrews Test':
@@ -117,6 +189,18 @@ if uploaded_file is not None:
             elif row['Test'] == 'Ljung-Box Test':
                 st.write("**Null Hypothesis (H0)**: The residuals are independently distributed (no autocorrelation).")
                 st.write("**Alternate Hypothesis (H1)**: The residuals are not independently distributed (presence of autocorrelation).")
+            elif row['Test'] == 'Elliott-Rothenberg-Stock (ERS) Test':
+                st.write("**Null Hypothesis (H0)**: The time series has a unit root (is non-stationary).")
+                st.write("**Alternate Hypothesis (H1)**: The time series does not have a unit root (is stationary).")
+            elif row['Test'] == 'Ng-Perron Test':
+                st.write("**Null Hypothesis (H0)**: The time series has a unit root (is non-stationary).")
+                st.write("**Alternate Hypothesis (H1)**: The time series does not have a unit root (is stationary).")
+            elif row['Test'] == 'Leybourne-McCabe Test':
+                st.write("**Null Hypothesis (H0)**: The time series is stationary.")
+                st.write("**Alternate Hypothesis (H1)**: The time series is not stationary.")
+            elif row['Test'] == 'Lumsdaine-Papell Test':
+                st.write("**Null Hypothesis (H0)**: The time series has a unit root (is non-stationary).")
+                st.write("**Alternate Hypothesis (H1)**: The time series does not have a unit root (is stationary).")
             st.write("---")
 
         st.write("### Final Table of Test Results")
@@ -125,6 +209,6 @@ if uploaded_file is not None:
         # Plot the series
         st.subheader("Time Series Plot")
         fig, ax = plt.subplots()
-        ax.plot(series)
-        ax.set_title(f'Time Series Plot for {column}')
+        ax.plot(time_series)
+        ax.set_title(f'Time Series Plot for {column_name}')
         st.pyplot(fig)
