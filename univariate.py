@@ -38,11 +38,14 @@ if uploaded_file is not None:
             st.write(f"   {key}: {value}")
 
         # Perform KPSS test
-        kpss_stat, kpss_p_value, kpss_lag = kpss(series, regression='c', nlags='auto')
+        kpss_stat, kpss_p_value, kpss_lag, kpss_crit = kpss(series, regression='c', nlags='auto')
         st.write("### Kwiatkowski-Phillips-Schmidt-Shin (KPSS) Test Results:")
         st.write(f"KPSS Statistic: {kpss_stat}")
         st.write(f"p-value: {kpss_p_value}")
         st.write(f"Lags used: {kpss_lag}")
+        st.write("Critical Values:")
+        for key, value in kpss_crit.items():
+            st.write(f"   {key}: {value}")
 
         # Perform Phillips-Perron (PP) Test
         pp_test = PhillipsPerron(series)
