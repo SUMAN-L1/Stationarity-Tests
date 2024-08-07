@@ -2,9 +2,10 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from statsmodels.tsa.stattools import adfuller, kpss, acf, q_stat, ljungbox, zivot_andrews
+from statsmodels.tsa.stattools import adfuller, kpss, acf, zivot_andrews
 from arch.unitroot import PhillipsPerron
 from statsmodels.stats.stattools import durbin_watson
+from statsmodels.stats.diagnostic import acorr_ljungbox
 
 st.title('Comprehensive Stationarity Tests')
 
@@ -51,9 +52,9 @@ if uploaded_file is not None:
         st.write(f"PP Statistic: {pp_statistic}")
         st.write(f"p-value: {pp_pvalue}")
         st.write("Critical Values:")
-        st.write("   1%: ", pp_test.critical_values[1])
-        st.write("   5%: ", pp_test.critical_values[5])
-        st.write("   10%: ", pp_test.critical_values[10])
+        st.write(f"   1%: {pp_test.critical_values[1]}")
+        st.write(f"   5%: {pp_test.critical_values[5]}")
+        st.write(f"   10%: {pp_test.critical_values[10]}")
 
         # Perform Zivot-Andrews Test
         za_result = zivot_andrews(series)
@@ -74,7 +75,7 @@ if uploaded_file is not None:
         st.write(f"Durbin-Watson Statistic: {dw_statistic}")
 
         # Perform Ljung-Box Test
-        ljung_box_result = ljungbox(acf(series, nlags=20)[1:], lags=[20], return_df=True)
+        ljung_box_result = acorr_ljungbox(series, lags=[20], return_df=True)
         st.write("### Ljung-Box Test Results:")
         st.write(ljung_box_result)
 
@@ -130,7 +131,7 @@ if uploaded_file is not None:
         
         # Ljung-Box Test Interpretation
         st.write("#### Ljung-Box Test Interpretation:")
-        if ljung_box_result['lb_pvalue'][0] < 0.05:
+        if ljung_box_result['lb_pvalue'][20] < 0.05:
             st.write("The p-value is less than 0.05, indicating that we reject the null hypothesis.")
             st.write("Conclusion: There is significant autocorrelation in the residuals.")
         else:
