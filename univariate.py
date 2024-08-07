@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from statsmodels.tsa.stattools import adfuller, kpss, acf, zivot_andrews
+from statsmodels.tsa.stattools import adfuller, kpss, zivot_andrews
 from arch.unitroot import PhillipsPerron
 from statsmodels.stats.stattools import durbin_watson
 from statsmodels.stats.diagnostic import acorr_ljungbox
@@ -55,9 +55,8 @@ if uploaded_file is not None:
         st.write(f"PP Statistic: {pp_statistic}")
         st.write(f"p-value: {pp_pvalue}")
         st.write("Critical Values:")
-        st.write(f"   1%: {pp_test.critical_values[1]}")
-        st.write(f"   5%: {pp_test.critical_values[5]}")
-        st.write(f"   10%: {pp_test.critical_values[10]}")
+        for key, value in pp_test.critical_values.items():
+            st.write(f"   {key}%: {value}")
 
         # Perform Zivot-Andrews Test
         za_result = zivot_andrews(series)
