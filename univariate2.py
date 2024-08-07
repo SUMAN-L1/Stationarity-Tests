@@ -73,9 +73,24 @@ if uploaded_file is not None:
         time_series = df[column_name].dropna()
         results_df = run_tests(time_series)
 
-        st.write("Test Results:")
-        st.write(results_df)
-
-        st.write("Interpretation:")
         for index, row in results_df.iterrows():
-            st.write(row['Result'])
+            st.write(f"### {row['Test']}")
+            st.write(f"**Test Statistic**: {row['Test Statistic']}")
+            st.write(f"**p-value**: {row['p-value']}")
+            st.write(f"**Result**: {row['Result']}")
+            if row['Test'] == 'Elliott-Rothenberg-Stock (ERS) Test':
+                st.write("**Null Hypothesis (H0)**: The time series has a unit root (is non-stationary).")
+                st.write("**Alternate Hypothesis (H1)**: The time series does not have a unit root (is stationary).")
+            elif row['Test'] == 'Ng-Perron Test':
+                st.write("**Null Hypothesis (H0)**: The time series has a unit root (is non-stationary).")
+                st.write("**Alternate Hypothesis (H1)**: The time series does not have a unit root (is stationary).")
+            elif row['Test'] == 'Leybourne-McCabe Test':
+                st.write("**Null Hypothesis (H0)**: The time series is stationary.")
+                st.write("**Alternate Hypothesis (H1)**: The time series is not stationary.")
+            elif row['Test'] == 'Lumsdaine-Papell Test':
+                st.write("**Null Hypothesis (H0)**: The time series has a unit root (is non-stationary).")
+                st.write("**Alternate Hypothesis (H1)**: The time series does not have a unit root (is stationary).")
+            st.write("---")
+
+        st.write("### Final Table of Test Results")
+        st.write(results_df)
