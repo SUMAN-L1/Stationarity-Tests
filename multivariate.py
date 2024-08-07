@@ -112,9 +112,17 @@ class Johansen:
         return eigenvectors, rejected_r_values
 
 def load_data():
-    uploaded_file = st.file_uploader("Upload your CSV, xlsx, xls file", type=["csv", "xlsx", "xls"])
+    uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
     if uploaded_file is not None:
-        df = pd.read_csv(uploaded_file, index_col=0, parse_dates=True)
+        try:
+            df = pd.read_csv(uploaded_file, index_col=0, parse_dates=True, encoding='utf-8')
+        except UnicodeDecodeError:
+            st.error("Unicode decode error. Trying different encoding.")
+            try:
+                df = pd.read_csv(uploaded_file, index_col=0, parse_dates=True, encoding='ISO-8859-1')
+            except Exception as e:
+                st.error(f"Failed to read file with different encoding: {e}")
+                return None
         return df
     return None
 
