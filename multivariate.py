@@ -7,7 +7,7 @@ from statsmodels.tsa.vector_ar.vecm import coint_johansen
 def determine_best_lag_and_model(data):
     """ Automatically select the best lag based on AIC for VAR model. """
     n_obs, n_vars = data.shape
-    max_lags = min(10, n_obs // 3)  # Ensure that max_lags is reasonable
+    max_lags = min(5, n_obs // 3)  # Limit max_lags to 5 or less
 
     if max_lags < 1:
         st.error("Insufficient data to determine best lags. Try with more observations.")
