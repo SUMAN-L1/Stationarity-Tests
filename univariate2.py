@@ -149,6 +149,7 @@ def run_tests(time_series):
 
 # Streamlit app
 st.title('Univariate Time Series Stationarity Tests by [SUMANECON-GKVK]')
+st.subtitle('Dedicated to Dr. Lalith Achoth')
 
 uploaded_file = st.file_uploader("Choose a CSV, xlsx, xls file", type=["csv","xlsx","xls"])
 
