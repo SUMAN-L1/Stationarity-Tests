@@ -112,22 +112,14 @@ class Johansen:
         return eigenvectors, rejected_r_values
 
 def load_data():
-    uploaded_file = st.file_uploader("Upload your CSV file", type=["csv", "xlsx"])
+    uploaded_file = st.file_uploader("Upload your Excel file", type=["xlsx"])
     if uploaded_file is not None:
-        delimiter = st.selectbox("Select delimiter", [',', ';', '\t'], index=0)
         try:
-            df = pd.read_csv(uploaded_file, index_col=0, parse_dates=True, delimiter=delimiter, encoding='utf-8')
-        except UnicodeDecodeError:
-            st.error("Unicode decode error. Trying different encoding.")
-            try:
-                df = pd.read_csv(uploaded_file, index_col=0, parse_dates=True, delimiter=delimiter, encoding='ISO-8859-1')
-            except Exception as e:
-                st.error(f"Failed to read file with different encoding: {e}")
-                return None
-        except pd.errors.ParserError as e:
-            st.error(f"Error parsing CSV file: {e}")
+            df = pd.read_excel(uploaded_file, index_col=0, parse_dates=True)
+            return df
+        except Exception as e:
+            st.error(f"Failed to read Excel file: {e}")
             return None
-        return df
     return None
 
 def perform_johansen_test(df):
@@ -163,7 +155,7 @@ def main():
         if st.button("Perform Johansen Test"):
             perform_johansen_test(df)
     else:
-        st.write("Please upload a CSV file with your time series data.")
+        st.write("Please upload an Excel file with your time series data.")
 
 if __name__ == "__main__":
     main()
