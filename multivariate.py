@@ -1,131 +1,26 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from statsmodels.tsa.tsatools import lagmat
-from statsmodels.tsa.vector_ar.vecm import cajo_test
-
-# Dummy critical values dictionary for demonstration
-critical_values_map = {
-    "TRACE_0": [15.49, 20.20, 25.42],
-    "TRACE_1": [20.20, 25.42, 30.40],
-    "MAX_EVAL_0": [15.49, 20.20, 25.42],
-    "MAX_EVAL_1": [20.20, 25.42, 30.40],
-}
+from statsmodels.tsa.api import VAR
+from statsmodels.tsa.vector_ar.vecm import coint_johansen
 
 def determine_best_lag_and_model(data):
-    """ Automatically select the best lag and model based on criteria. """
-    # Example: Use lag length selection based on AIC for VAR model.
-    from statsmodels.tsa.api import VAR
+    """ Automatically select the best lag based on AIC for VAR model. """
     max_lags = 10
     model = VAR(data)
     results = model.fit(maxlags=max_lags, ic='aic')
     best_lags = results.k_ar
 
-    # In this example, we select model 1 arbitrarily
-    # Replace this logic with your own criteria if necessary
+    # Using model 1 as default
     best_model = 1 
 
     return best_lags, best_model
 
-class Johansen:
-    def __init__(self, x, model, k=1, trace=True, significance_level=1):
-        self.x = x
-        self.k = k
-        self.trace = trace
-        self.model = model
-        self.significance_level = significance_level
-
-        if trace:
-            key = f"TRACE_{model}"
-        else:
-            key = f"MAX_EVAL_{model}"
-
-        self.critical_values = critical_values_map.get(key, [0, 0, 0])
-
-    def mle(self):
-        x_diff = np.diff(self.x, axis=0)
-        x_diff_lags = lagmat(x_diff, self.k, trim='both')
-        x_lag = lagmat(self.x, 1, trim='both')
-        x_diff = x_diff[self.k:]
-        x_lag = x_lag[self.k:]
-
-        if self.model != 0:
-            ones = np.ones((x_diff_lags.shape[0], 1))
-            x_diff_lags = np.append(x_diff_lags, ones, axis=1)
-
-        if self.model in (3, 4):
-            times = np.asarray(range(x_diff_lags.shape[0])).reshape((-1, 1))
-            x_diff_lags = np.append(x_diff_lags, times, axis=1)
-
-        try:
-            inverse = np.linalg.pinv(x_diff_lags)
-        except np.linalg.LinAlgError:
-            st.error("Unable to take inverse of x_diff_lags.")
-            return None
-
-        u = x_diff - np.dot(x_diff_lags, np.dot(inverse, x_diff))
-        v = x_lag - np.dot(x_diff_lags, np.dot(inverse, x_lag))
-
-        t = x_diff_lags.shape[0]
-        Svv = np.dot(v.T, v) / t
-        Suu = np.dot(u.T, u) / t
-        Suv = np.dot(u.T, v) / t
-        Svu = Suv.T
-
-        try:
-            Svv_inv = np.linalg.inv(Svv)
-            Suu_inv = np.linalg.inv(Suu)
-        except np.linalg.LinAlgError:
-            st.error("Unable to take inverse of covariance matrices.")
-            return None
-
-        cov_prod = np.dot(Svv_inv, np.dot(Svu, np.dot(Suu_inv, Suv)))
-        eigenvalues, eigenvectors = np.linalg.eig(cov_prod)
-
-        evec_Svv_evec = np.dot(eigenvectors.T, np.dot(Svv, eigenvectors))
-        cholesky_factor = np.linalg.cholesky(evec_Svv_evec)
-        try:
-            eigenvectors = np.dot(eigenvectors, np.linalg.inv(cholesky_factor.T))
-        except np.linalg.LinAlgError:
-            st.error("Unable to take the inverse of the Cholesky factor.")
-            return None
-
-        indices_ordered = np.argsort(eigenvalues)
-        indices_ordered = np.flipud(indices_ordered)
-        eigenvalues = eigenvalues[indices_ordered]
-        eigenvectors = eigenvectors[:, indices_ordered]
-
-        return eigenvectors, eigenvalues
-
-    def h_test(self, eigenvalues, r):
-        nobs, m = self.x.shape
-        t = nobs - self.k - 1
-
-        if self.trace:
-            m = len(eigenvalues)
-            statistic = -t * np.sum(np.log(np.ones(m) - eigenvalues)[r:])
-        else:
-            statistic = -t * np.sum(np.log(1 - eigenvalues[r]))
-
-        critical_value = self.critical_values[m - r - 1]
-
-        return statistic > critical_value
-
-    def johansen(self):
-        nobs, m = self.x.shape
-
-        try:
-            eigenvectors, eigenvalues = self.mle()
-        except Exception as e:
-            st.error(f"Unable to obtain possible cointegrating relations: {e}")
-            return None
-
-        rejected_r_values = []
-        for r in range(m):
-            if self.h_test(eigenvalues, r):
-                rejected_r_values.append(r)
-
-        return eigenvectors, rejected_r_values
+def perform_johansen_test(df, best_lags):
+    """ Perform Johansen cointegration test with the best parameters. """
+    # Johansen test for cointegration
+    johansen_test = coint_johansen(df, det_order=0, k_ar_diff=best_lags)
+    return johansen_test
 
 def load_data():
     uploaded_file = st.file_uploader("Upload your Excel file", type=["xlsx"])
@@ -143,27 +38,26 @@ def auto_analyze_data(df):
     st.write("Automatically analyzing the data...")
 
     # Automatically determine the best lag and model
-    best_lags, best_model = determine_best_lag_and_model(df.values)
+    best_lags, _ = determine_best_lag_and_model(df.values)
 
-    johansen_test = Johansen(df.values, model=best_model, k=best_lags, trace=True)
-    try:
-        eigenvectors, rejected_r_values = johansen_test.johansen()
-        if eigenvectors is not None:
-            st.write("Johansen Test Results:")
-            st.write("Rejected number of cointegrating vectors:")
-            st.write(rejected_r_values)
-            st.write("Eigenvectors (cointegrating vectors):")
-            st.write(eigenvectors)
+    johansen_test = perform_johansen_test(df.values, best_lags)
 
-            # Interpretation
-            if rejected_r_values:
-                st.write(f"The Johansen test suggests that there are {rejected_r_values[-1]} cointegrating vectors.")
-            else:
-                st.write("The Johansen test did not find significant cointegration.")
+    # Display Johansen test results
+    st.write("Johansen Test Results:")
+    st.write("Trace Statistic:", johansen_test.lr1)
+    st.write("Critical Values (90%, 95%, 99%):", johansen_test.cvt)
+
+    # Interpretation
+    for i, stat in enumerate(johansen_test.lr1):
+        st.write(f"Trace Statistic for rank {i+1}: {stat}")
+        st.write(f"Critical Values for rank {i+1}: {johansen_test.cvt[i]}")
+
+    st.write("Interpretation:")
+    for i in range(len(johansen_test.lr1)):
+        if johansen_test.lr1[i] > johansen_test.cvt[i, 1]:  # Compare to 95% critical value
+            st.write(f"Rank {i+1}: Cointegration is detected.")
         else:
-            st.write("No results available.")
-    except Exception as e:
-        st.error(f"An error occurred during the Johansen test: {e}")
+            st.write(f"Rank {i+1}: No significant cointegration detected.")
 
 def main():
     st.title("Johansen Cointegration Test")
