@@ -2,11 +2,10 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from statsmodels.tsa.stattools import adfuller, kpss
+from statsmodels.tsa.stattools import adfuller, kpss, zivot_andrews
 from arch.unitroot import PhillipsPerron, VarianceRatio
 from statsmodels.stats.stattools import durbin_watson
 from statsmodels.stats.diagnostic import acorr_ljungbox
-from statsmodels.tsa.stattools import zivot_andrews
 
 st.title('Comprehensive Stationarity Tests')
 
@@ -84,7 +83,7 @@ if uploaded_file is not None:
         columns = ["Test", "Test Statistic", "p-value", "Interpretation",
                    "Critical Value 1%", "Critical Value 5%", "Critical Value 10%"]
         
-        # Ensure that each result has the same length
+        # Ensure all rows have the same length
         results = [result + ["-", "-", "-"] * (len(columns) - len(result)) for result in results]
         results_df = pd.DataFrame(results, columns=columns)
         
