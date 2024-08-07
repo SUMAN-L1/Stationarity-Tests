@@ -84,7 +84,8 @@ if uploaded_file is not None:
                    "Critical Value 1%", "Critical Value 5%", "Critical Value 10%"]
         
         # Ensure all rows have the same length
-        results = [result + ["-", "-", "-"] * (len(columns) - len(result)) for result in results]
+        max_length = len(columns)
+        results = [result + ["-"] * (max_length - len(result)) for result in results]
         results_df = pd.DataFrame(results, columns=columns)
         
         # Display results
@@ -97,3 +98,4 @@ if uploaded_file is not None:
         ax.plot(series)
         ax.set_title(f'Time Series Plot for {column}')
         st.pyplot(fig)
+
