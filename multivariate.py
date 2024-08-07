@@ -122,13 +122,15 @@ def load_data():
             return None
     return None
 
-def perform_johansen_test(df):
-    st.write("Performing Johansen Cointegration Test...")
-    model = st.selectbox("Select model", [0, 1, 2, 3, 4])
-    k = st.slider("Select number of lags", min_value=1, max_value=10, value=1)
-    trace = st.radio("Select trace or max eigenvalue statistic", ["Trace", "Max Eigenvalue"])
+def auto_analyze_data(df):
+    st.write("Automatically analyzing the data...")
 
-    trace = True if trace == "Trace" else False
+    # Example of automatic model and lag selection
+    # Here we use a fixed model (1) and lag (1) for simplicity.
+    # In practice, you could use various criteria or methods to choose these.
+    model = 1
+    k = 1
+    trace = True
 
     johansen_test = Johansen(df.values, model=model, k=k, trace=trace)
     try:
@@ -152,8 +154,8 @@ def main():
         st.write("Data preview:")
         st.write(df.head())
 
-        if st.button("Perform Johansen Test"):
-            perform_johansen_test(df)
+        if st.button("Analyze Data"):
+            auto_analyze_data(df)
     else:
         st.write("Please upload an Excel file with your time series data.")
 
