@@ -35,13 +35,13 @@ if uploaded_file is not None:
         adf_critical_values = adf_result[4]
         adf_interpretation = "Stationary" if adf_result[1] < 0.05 else "Non-stationary"
         results.append(["ADF Test", adf_result[0], adf_result[1], adf_interpretation,
-                        adf_critical_values['1%'], adf_critical_values['5%'], adf_critical_values['10%']])
+                        adf_critical_values.get('1%'), adf_critical_values.get('5%'), adf_critical_values.get('10%')])
 
         # Perform KPSS test
         kpss_stat, kpss_p_value, kpss_lag, kpss_crit = kpss(series, regression='c', nlags='auto')
         kpss_interpretation = "Non-stationary" if kpss_p_value < 0.05 else "Stationary"
         results.append(["KPSS Test", kpss_stat, kpss_p_value, kpss_interpretation,
-                        kpss_crit['10%'], kpss_crit['5%'], kpss_crit['2.5%'], kpss_crit['1%']])
+                        kpss_crit.get('10%'), kpss_crit.get('5%'), kpss_crit.get('2.5%'), kpss_crit.get('1%')])
 
         # Perform Phillips-Perron (PP) Test
         pp_test = PhillipsPerron(series)
@@ -50,14 +50,14 @@ if uploaded_file is not None:
         pp_critical_values = pp_test.critical_values
         pp_interpretation = "Stationary" if pp_pvalue < 0.05 else "Non-stationary"
         results.append(["Phillips-Perron Test", pp_statistic, pp_pvalue, pp_interpretation,
-                        pp_critical_values['1%'], pp_critical_values['5%'], pp_critical_values['10%']])
+                        pp_critical_values.get('1%'), pp_critical_values.get('5%'), pp_critical_values.get('10%')])
 
         # Perform Zivot-Andrews Test
         za_result = zivot_andrews(series)
         za_critical_values = za_result[3]
         za_interpretation = "Stationary" if za_result[1] < 0.05 else "Non-stationary"
         results.append(["Zivot-Andrews Test", za_result[0], za_result[1], za_interpretation,
-                        za_critical_values['1%'], za_critical_values['5%'], za_critical_values['10%']])
+                        za_critical_values.get('1%'), za_critical_values.get('5%'), za_critical_values.get('10%')])
 
         # Perform Variance Ratio Test
         vr_test = VarianceRatio(series, lags=2)
