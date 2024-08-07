@@ -2,8 +2,9 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from statsmodels.tsa.stattools import adfuller, kpss, zivot_andrews, durbin_watson
+from statsmodels.tsa.stattools import adfuller, kpss, zivot_andrews
 from arch.unitroot import PhillipsPerron, VarianceRatio
+from statsmodels.stats.stattools import durbin_watson
 from statsmodels.stats.diagnostic import acorr_ljungbox
 
 st.title('Comprehensive Stationarity Tests')
