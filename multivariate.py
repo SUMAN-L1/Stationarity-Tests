@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from statsmodels.tsa.api import VAR
 from statsmodels.tsa.stattools import adfuller
-from statsmodels.tsa.vector_ar.vecm import cajo_test
+from statsmodels.tsa.vector_ar.vecm import cajo_test, Johansen
 import matplotlib.pyplot as plt
 
 def load_data():
@@ -15,10 +15,13 @@ def load_data():
 
 def perform_johansen_test(df):
     st.write("Performing Johansen Cointegration Test...")
-    model = VAR(df)
-    results = model.fit(maxlags=15, ic='aic')
-    johansen_test = results.test_causality(0, 'all', kind='f', verbose=True)
-    st.write(johansen_test)
+    johansen_test = Johansen(df)
+    result = johansen_test.fit()
+    st.write("Johansen Test Results:")
+    st.write(f"Trace Statistic: {result.lr1}")
+    st.write(f"Critical Values: {result.cvt}")
+    st.write(f"Eigenvalue Statistic: {result.lr2}")
+    st.write(f"Critical Values: {result.cvm}")
 
 def perform_engle_granger_test(df):
     st.write("Performing Engle-Granger Two-Step Cointegration Test...")
