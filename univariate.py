@@ -2,9 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from statsmodels.tsa.stattools import adfuller, kpss, zivot_andrews
+from statsmodels.tsa.stattools import adfuller, kpss, zivot_andrews, durbin_watson
 from arch.unitroot import PhillipsPerron, VarianceRatio
-from statsmodels.stats.stattools import durbin_watson
 from statsmodels.stats.diagnostic import acorr_ljungbox
 
 st.title('Comprehensive Stationarity Tests')
@@ -54,7 +53,7 @@ if uploaded_file is not None:
 
         # Perform Variance Ratio Test
         vr_test = VarianceRatio(series, lags=2)
-        vr_interpretation = "Not a Random Walk" if vr_test.pvalue < 0.05 else "Random Walk"
+        vr_interpretation = "Does not follow a Random Walk" if vr_test.pvalue < 0.05 else "Follows a Random Walk"
         results.append(["Variance Ratio Test", vr_test.vr, vr_test.pvalue, vr_interpretation])
 
         # Perform Durbin-Watson Test
