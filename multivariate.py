@@ -2,6 +2,30 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from statsmodels.tsa.tsatools import lagmat
+from statsmodels.tsa.vector_ar.vecm import cajo_test
+
+# Dummy critical values dictionary for demonstration
+critical_values_map = {
+    "TRACE_0": [15.49, 20.20, 25.42],
+    "TRACE_1": [20.20, 25.42, 30.40],
+    "MAX_EVAL_0": [15.49, 20.20, 25.42],
+    "MAX_EVAL_1": [20.20, 25.42, 30.40],
+}
+
+def determine_best_lag_and_model(data):
+    """ Automatically select the best lag and model based on criteria. """
+    # Example: Use lag length selection based on AIC for VAR model.
+    from statsmodels.tsa.api import VAR
+    max_lags = 10
+    model = VAR(data)
+    results = model.fit(maxlags=max_lags, ic='aic')
+    best_lags = results.k_ar
+
+    # In this example, we select model 1 arbitrarily
+    # Replace this logic with your own criteria if necessary
+    best_model = 1 
+
+    return best_lags, best_model
 
 class Johansen:
     def __init__(self, x, model, k=1, trace=True, significance_level=1):
@@ -10,13 +34,6 @@ class Johansen:
         self.trace = trace
         self.model = model
         self.significance_level = significance_level
-
-        critical_values_map = {
-            "TRACE_0": [15.49, 20.20, 25.42],
-            "TRACE_1": [20.20, 25.42, 30.40],
-            "MAX_EVAL_0": [15.49, 20.20, 25.42],
-            "MAX_EVAL_1": [20.20, 25.42, 30.40],
-        }
 
         if trace:
             key = f"TRACE_{model}"
@@ -125,14 +142,10 @@ def load_data():
 def auto_analyze_data(df):
     st.write("Automatically analyzing the data...")
 
-    # Example of automatic model and lag selection
-    # Here we use a fixed model (1) and lag (1) for simplicity.
-    # In practice, you could use various criteria or methods to choose these.
-    model = 1
-    k = 1
-    trace = True
+    # Automatically determine the best lag and model
+    best_lags, best_model = determine_best_lag_and_model(df.values)
 
-    johansen_test = Johansen(df.values, model=model, k=k, trace=trace)
+    johansen_test = Johansen(df.values, model=best_model, k=best_lags, trace=True)
     try:
         eigenvectors, rejected_r_values = johansen_test.johansen()
         if eigenvectors is not None:
@@ -141,6 +154,12 @@ def auto_analyze_data(df):
             st.write(rejected_r_values)
             st.write("Eigenvectors (cointegrating vectors):")
             st.write(eigenvectors)
+
+            # Interpretation
+            if rejected_r_values:
+                st.write(f"The Johansen test suggests that there are {rejected_r_values[-1]} cointegrating vectors.")
+            else:
+                st.write("The Johansen test did not find significant cointegration.")
         else:
             st.write("No results available.")
     except Exception as e:
