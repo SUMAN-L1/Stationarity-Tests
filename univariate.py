@@ -7,7 +7,7 @@ from arch.unitroot import PhillipsPerron, VarianceRatio
 from statsmodels.stats.stattools import durbin_watson
 from statsmodels.stats.diagnostic import acorr_ljungbox
 
-st.title('Comprehensive Stationarity Tests by [SumanEcon]')
+st.title('Univariate Stationarity Tests by [SumanEcon]')
 
 uploaded_file = st.file_uploader("Upload your file (CSV, XLSX, or XLS)", type=["csv", "xlsx", "xls"])
 
