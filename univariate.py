@@ -84,19 +84,6 @@ if uploaded_file is not None:
         ax.set_title(f'Time Series Plot for {column}')
         st.pyplot(fig)
 
-import streamlit as st
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from statsmodels.tsa.stattools import adfuller, kpss, zivot_andrews
-from arch.unitroot import PhillipsPerron, VarianceRatio
-from statsmodels.stats.stattools import durbin_watson
-from statsmodels.stats.diagnostic import acorr_ljungbox
-
-st.title('Comprehensive Stationarity Tests')
-
-# File upload
-uploaded_file = st.file_uploader("Upload your file (CSV, XLSX, or XLS)", type=["csv", "xlsx", "xls"])
 
 if uploaded_file is not None:
     # Read file based on extension
