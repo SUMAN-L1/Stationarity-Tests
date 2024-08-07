@@ -1,9 +1,10 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import statsmodels.api as sm
 from statsmodels.tsa.api import VAR
+from statsmodels.tsa.vector_ar.vecm import Johansen
 from statsmodels.tsa.stattools import adfuller
-from statsmodels.tsa.vector_ar.vecm import cajo_test, Johansen
 import matplotlib.pyplot as plt
 
 def load_data():
@@ -16,12 +17,18 @@ def load_data():
 def perform_johansen_test(df):
     st.write("Performing Johansen Cointegration Test...")
     johansen_test = Johansen(df)
-    result = johansen_test.fit()
+    result = johansen_test.fit(maxlags=15, det_order=0)  # Adjust parameters as needed
+    
     st.write("Johansen Test Results:")
-    st.write(f"Trace Statistic: {result.lr1}")
-    st.write(f"Critical Values: {result.cvt}")
-    st.write(f"Eigenvalue Statistic: {result.lr2}")
-    st.write(f"Critical Values: {result.cvm}")
+    st.write("Trace Statistics:")
+    st.write(result.lr1)
+    st.write("Critical Values (Trace):")
+    st.write(result.cvt)
+    
+    st.write("Maximum Eigenvalue Statistics:")
+    st.write(result.lr2)
+    st.write("Critical Values (Max Eigenvalue):")
+    st.write(result.cvm)
 
 def perform_engle_granger_test(df):
     st.write("Performing Engle-Granger Two-Step Cointegration Test...")
