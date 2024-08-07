@@ -6,7 +6,13 @@ from statsmodels.tsa.vector_ar.vecm import coint_johansen
 
 def determine_best_lag_and_model(data):
     """ Automatically select the best lag based on AIC for VAR model. """
-    max_lags = min(10, len(data) // 2)  # Ensure that max_lags is reasonable
+    n_obs, n_vars = data.shape
+    max_lags = min(10, n_obs // 3)  # Ensure that max_lags is reasonable
+
+    if max_lags < 1:
+        st.error("Insufficient data to determine best lags. Try with more observations.")
+        return None, None
+
     try:
         model = VAR(data)
         results = model.fit(maxlags=max_lags, ic='aic')
@@ -32,6 +38,9 @@ def load_data():
         try:
             df = pd.read_excel(uploaded_file, index_col=0, parse_dates=True)
             df = df.dropna()  # Drop rows with NaNs
+            if df.shape[0] < 10 or df.shape[1] < 2:  # Ensure there are enough observations and variables
+                st.error("Insufficient data. Please provide a larger dataset.")
+                return None
             return df
         except Exception as e:
             st.error(f"Failed to read Excel file: {e}")
